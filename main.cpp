@@ -7,12 +7,8 @@ using namespace std;
 
 void readInput(ifstream &inputFile);
 
-void initLand();
-
 Result findSolution(Land pLand);
 
-
-bool canBePlaced(FieldInfo field, Pipe pipe);
 
 vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs)
 ;

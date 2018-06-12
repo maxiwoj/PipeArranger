@@ -29,6 +29,10 @@ public:
     vector<char> nextPipes;
     vector<loc> freeSources;
     vector<loc> unsuppliedHouses;
+
+    vector<loc> allSources;
+    vector<loc> allHouses;
+
     vector<loc> currentFieldsLeaking;
 
     Land(int Xsize, int Ysize);
@@ -46,9 +50,11 @@ public:
     LandConnection getFieldsLeft(Loc loc);
     LandConnection getFieldsRight(Loc loc);
 
-    vector<Loc> getPossibleNeighbourFields(loc &loc);
-
     bool waterWillFlowThroughNewPipe(Loc loc, const Pipe &pipe);
+
+    vector<Loc> getPossibleNeighbourFields(const loc &loc);
+
+    void reverseNearbyFields(const Loc &fieldLoc, const LandConnection &connection);
 };
 
 

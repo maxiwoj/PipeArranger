@@ -88,10 +88,10 @@ void Land::markFieldSingleType(Loc loc, LandConnection type, bool taken) {
 
 void Land::markFieldMultipleType(Loc loc, FieldInfo types) {
     this->takenFields[loc.x][loc.y] = types.taken;
-    this->verticalLandConnections[loc.x][loc.y] = types.up;
-    this->verticalLandConnections[loc.x][loc.y + 1] = types.down;
-    this->horizontalLandConnections[loc.x][loc.y] = types.left;
-    this->horizontalLandConnections[loc.x][loc.y] = types.right;
+    this->verticalLandConnections[loc.x][loc.y] = loc.y != 0 ? types.up : Blocked;
+    this->verticalLandConnections[loc.x][loc.y + 1] = loc.y + 2 != Ysize ? types.down : Blocked;
+    this->horizontalLandConnections[loc.x][loc.y] = loc.x != 0 ? types.left : Blocked;
+    this->horizontalLandConnections[loc.x + 1][loc.y] = loc.x + 2 != Xsize ? types.right : Blocked;
 }
 
 bool Land::tryPlacePipe(Loc loc, Pipe pipe) {
@@ -106,25 +106,29 @@ bool Land::tryPlacePipe(Loc loc, Pipe pipe) {
         if (this->getFieldsUp(loc) == Extra && pipe.up == Full) {
             const Loc &locUp = (Loc) {loc.x, loc.y - 1};
             this->markFieldSingleType(locUp, Blocked, true);
-//            remove(this->currentFieldsLeaking.begin(), this->currentFieldsLeaking.end(), locUp);
+            remove(this->freeSources.begin(), this->freeSources.end(), locUp);
+            remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locUp);
             pipe.up = Extra;
         }
         if (this->getFieldsDown(loc) == Extra && pipe.down == Full) {
             const Loc &locDown = (Loc) {loc.x, loc.y + 1};
             this->markFieldSingleType(locDown, Blocked, true);
-//            remove(this->currentFieldsLeaking.begin(), this->currentFieldsLeaking.end(), locDown);
+            remove(this->freeSources.begin(), this->freeSources.end(), locDown);
+            remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locDown);
             pipe.down = Extra;
         }
         if (this->getFieldsLeft(loc) == Extra && pipe.left == Full) {
             const Loc &locLeft = (Loc) {loc.x - 1, loc.y};
             this->markFieldSingleType(locLeft, Blocked, true);
-//            remove(this->currentFieldsLeaking.begin(), this->currentFieldsLeaking.end(), locLeft);
+            remove(this->freeSources.begin(), this->freeSources.end(), locLeft);
+            remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locLeft);
             pipe.left = Extra;
         }
         if(this->getFieldsRight(loc) == Extra && pipe.right == Full) {
             const Loc &locRight = (Loc) {loc.x + 1, loc.y};
             this->markFieldSingleType(locRight, Blocked, true);
-//            remove(this->freeSources.begin(), this->freeSources.end(), locRight);
+            remove(this->freeSources.begin(), this->freeSources.end(), locRight);
+            remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locRight);
             pipe.right = Extra;
         }
 
@@ -135,6 +139,7 @@ bool Land::tryPlacePipe(Loc loc, Pipe pipe) {
         newField->up = pipe.up;
         newField->down = pipe.down;
         this->markFieldMultipleType(loc, *newField);
+        this->currentFieldsLeaking.push_back(loc);
 
         return true;
     }
@@ -157,22 +162,41 @@ LandConnection Land::getFieldsRight(Loc loc) {
 void Land::reversePipePlacing(Loc loc, FieldInfo field) {
     this->takenFields[loc.x][loc.y] = false;
     if (this->getFieldsUp(loc) == Full) {
-        if (field.up == Extra) {
-            //TODO: If not blocked from other blocks EDIT: This should not mess up since it would be taken...
-            this->markFieldSingleType((Loc) {loc.x, loc.y - 1}, Extra, true);
-        }
+        const Loc &locUp = (Loc) {loc.x, loc.y - 1};
+        LandConnection connection = field.up;
+        reverseNearbyFields(locUp, connection);
     }
-    if (this->getFieldsDown(loc) == Full && field.down == Extra) {
-        this->markFieldSingleType((Loc) {loc.x, loc.y + 1}, Blocked, true);
+    if (this->getFieldsDown(loc) == Full) {
+        const Loc &locDown = (Loc) {loc.x, loc.y + 1};
+        LandConnection connection = field.down;
+        reverseNearbyFields(locDown, connection);
     }
-    if (this->getFieldsLeft(loc) == Full && field.left == Extra) {
-        this->markFieldSingleType((Loc) {loc.x - 1, loc.y}, Blocked, true);
+    if (this->getFieldsLeft(loc) == Full) {
+        const Loc &locLeft = (Loc) {loc.x - 1, loc.y};
+        LandConnection connection = field.left;
+        reverseNearbyFields(locLeft, connection);
     }
-    if(this->getFieldsRight(loc) == Full && field.right == Extra) {
-        this->markFieldSingleType((Loc) {loc.x + 1, loc.y}, Blocked, true);
+    if(this->getFieldsRight(loc) == Full) {
+        const Loc &locRight = (Loc) {loc.x + 1, loc.y};
+        LandConnection connection = field.right;
+        reverseNearbyFields(locRight, connection);
     }
     this->markFieldMultipleType(loc, field);
+    remove(this->currentFieldsLeaking.begin(), this->currentFieldsLeaking.end(), loc);
+}
 
+void Land::reverseNearbyFields(const Loc &fieldLoc, const LandConnection &connection) {
+    if (connection == Extra) {
+            //TODO: If not blocked from other blocks EDIT: This should not mess up since it would be taken... EDIT: Not if this was the end of the Land
+            markFieldSingleType(fieldLoc, Extra, true);
+            if(find(allHouses.begin(), allHouses.end(), fieldLoc) != allHouses.end()){
+                unsuppliedHouses.push_back(fieldLoc);
+            } else if(find(allSources.begin(), allSources.end(), fieldLoc) != allSources.end()) {
+                freeSources.push_back(fieldLoc);
+            }
+        } else {
+            currentFieldsLeaking.push_back(fieldLoc);
+        }
 }
 
 FieldInfo Land::getFieldInfo(Loc loc) {
@@ -189,7 +213,7 @@ bool Land::checkBoundCompatibility(LandConnection fieldConnection, LandConnectio
     return fieldConnection == Empty || fieldConnection == pipeConnection || fieldConnection == Extra;
 }
 
-vector<Loc> Land::getPossibleNeighbourFields(loc &loc) {
+vector<Loc> Land::getPossibleNeighbourFields(const loc &loc) {
     auto *fields = new vector<Loc>();
     auto field = this->getFieldInfo(loc);
     if ((field.up == Extra || field.up == Full) && !this->takenFields[loc.x][loc.y - 1]){
@@ -203,6 +227,10 @@ vector<Loc> Land::getPossibleNeighbourFields(loc &loc) {
     }
     if ((field.right == Extra || field.right == Full) && !this->takenFields[loc.x + 1][loc.y]){
         fields->push_back((Loc) {loc.x + 1, loc.y});
+    }
+    if(fields->empty()){
+        remove(freeSources.begin(), freeSources.end(), loc);
+        remove(currentFieldsLeaking.begin(), currentFieldsLeaking.end(), loc);
     }
     return *fields;
 }
