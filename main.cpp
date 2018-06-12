@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "defs.h"
+#include "Land.h"
 #include <queue>
 
 using namespace std;
@@ -9,11 +9,13 @@ void readInput(ifstream &inputFile);
 
 void initLand();
 
-vector<loc> freeSources;
-vector<loc> unsuppliedHouses;
-vector<loc> currentFieldsPossible;
-vector<char> nextPipes;
+Result findSolution(Land pLand);
 
+
+bool canBePlaced(FieldInfo field, Pipe pipe);
+
+vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs)
+;
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -22,41 +24,50 @@ int main(int argc, char* argv[]) {
     }
     ifstream inputFile (argv[1]);
     readInput(inputFile);
-    initLand();
 
     cout << "wymiary: " << Xsize << " " << Ysize << endl;
     cout << "liczba źródeł: " << SrcsNum << endl;
     cout << "liczba domow: " << HsNum << endl;
     cout << "liczba blokow: " << BlNum << endl;
-    cout << "bkock types: " << pipeTypes << endl;
+    cout << "block types: " << pipeTypes << endl;
+
+    auto land = new Land(Xsize, Ysize);
+
+    Result solution = findSolution(*land);
+    if(!solution.success) {
+        cout << "Could not find solution!" << endl;
+    }
+
 
     return 0;
 }
 
-void initLand() {
-    land = new landMark*[Xsize];
-    for (int i = 0 ; i < Xsize ; i++) {
-        land[i] = new landMark[Ysize];
-        for (int j = 0 ; j < Ysize ; j++) {
-            land[i][j] = Empty;
+Result findSolution(Land pLand) {
+//    End conditions
+    char nextPipe = pLand.nextPipes.front();
+    pLand.nextPipes.erase(pLand.nextPipes.begin());
+    auto possiblePipes = pipes.at(nextPipe);
+    for (auto &&fieldLeaking : concatenate(pLand.currentFieldsLeaking, pLand.freeSources)) {
+        vector<Loc> possiblefields = pLand.getPossibleNeighbourFields(fieldLeaking);
+        for (auto possiblefieldLoc: possiblefields) {
+            auto currentFieldSnapshot = pLand.getFieldInfo(possiblefieldLoc);
+            for (auto &&possiblePipe : possiblePipes) {
+                if(pLand.tryPlacePipe(possiblefieldLoc, possiblePipe)){
+                    Result result = findSolution(pLand);
+                    if(result.success) {
+                        result.result.push_back((PipePlacement) {possiblefieldLoc, possiblePipe.name}); // TODO: Reverse in the end
+                        return result;
+                    } else {
+                        pLand.reversePipePlacing(possiblefieldLoc, currentFieldSnapshot);
+                    }
+                }
+            }
         }
     }
-    for (int i = 0 ; i < SrcsNum ; i++) {
-        land[Srcs[i].x][Srcs[i].y] = Source;
-        freeSources.push_back(Srcs[i]);
-        currentFieldsPossible.push_back(Srcs[i]);
-    }
-    for (int i = 0; i < HsNum; ++i) {
-        land[Houses[i].x][Houses[i].y] = House;
-        unsuppliedHouses.push_back(Houses[i]);
-    }
-    for (int i = 0; i < BlNum; ++i) {
-        land[Blocks[i].x][Blocks[i].y] = Rock;
-    }
+    Result result1 = Result();
+    result1.success = false;
+    return result1;
 
-    for (auto &&pipeType :pipeTypes) {
-        nextPipes.push_back(pipeType);
-    }
 }
 
 void readInput(ifstream &inputFile) {
@@ -83,4 +94,12 @@ void readInput(ifstream &inputFile) {
     } else {
         cout << "Error opening file";
     }
+}
+
+// TODO: Go for checking for 2 vectors
+std::vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs)
+{
+    auto result = lhs;
+    std::copy( rhs.begin(), rhs.end(), std::back_inserter(result) );
+    return result;
 }
