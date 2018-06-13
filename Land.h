@@ -8,6 +8,7 @@
 
 #include "defs.h"
 
+
 typedef struct FieldInfo {
     LandConnection up;
     LandConnection down;
@@ -55,7 +56,8 @@ public:
     vector<Loc> getPossibleNeighbourFields(const loc &loc);
 
     void reverseNearbyFields(const Loc &fieldLoc, const LandConnection &connection);
-};
 
+    void printLand();
+};
 
 #endif //PROJECT_RURY_LAND_H

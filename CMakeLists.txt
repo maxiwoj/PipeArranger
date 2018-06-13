@@ -3,4 +3,4 @@ project(project_rury)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(project_rury main.cpp defs.h Land.cpp Land.h)
+add_executable(project_rury main.cpp defs.h Land.h Land.cpp defs.cpp)

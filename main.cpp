@@ -1,23 +1,36 @@
 #include <iostream>
 #include <fstream>
-#include "Land.h"
 #include <queue>
-
+#include "Land.h"
+#include "defs.h"
 using namespace std;
 
 void readInput(ifstream &inputFile);
 
 Result findSolution(Land pLand);
 
+vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs);
 
-vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs)
-;
+
+int Xsize, Ysize;
+int SrcsNum;
+loc *Srcs;
+int HsNum;
+loc *Houses;
+int BlNum;
+loc *Blocks;
+string pipeTypes;
+
+
+Pipe I1, I2, L1, L2, L3, L4, T1, T2, T3, T4, X;
+map<char, vector<Pipe>> pipes;
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         cout << "You need to specify input!" << endl;
         return 1;
     }
+    initializeStaticStructures();
     ifstream inputFile (argv[1]);
     readInput(inputFile);
 
@@ -32,14 +45,30 @@ int main(int argc, char* argv[]) {
     Result solution = findSolution(*land);
     if(!solution.success) {
         cout << "Could not find solution!" << endl;
+    } else {
+        reverse(solution.result.begin(), solution.result.end());
+        for (auto &pipePlacement: solution.result){
+            cout << pipePlacement.loc.x << " " << pipePlacement.loc.y << " " << pipePlacement.landMark << endl;
+        }
     }
-
 
     return 0;
 }
 
 Result findSolution(Land pLand) {
 //    End conditions
+    Result result1 = Result();
+    for(auto &field: concatenate(pLand.currentFieldsLeaking, pLand.freeSources)){
+        pLand.getPossibleNeighbourFields(field);
+    }
+    if (pLand.unsuppliedHouses.empty() && pLand.currentFieldsLeaking.empty()){
+        result1.success = true;
+        return result1;
+    }
+    if (pLand.nextPipes.empty()){
+        result1.success = false;
+        return result1;
+    }
     char nextPipe = pLand.nextPipes.front();
     pLand.nextPipes.erase(pLand.nextPipes.begin());
     auto possiblePipes = pipes.at(nextPipe);
@@ -51,7 +80,7 @@ Result findSolution(Land pLand) {
                 if(pLand.tryPlacePipe(possiblefieldLoc, possiblePipe)){
                     Result result = findSolution(pLand);
                     if(result.success) {
-                        result.result.push_back((PipePlacement) {possiblefieldLoc, possiblePipe.name}); // TODO: Reverse in the end
+                        result.result.push_back((PipePlacement) {possiblefieldLoc, possiblePipe.name});
                         return result;
                     } else {
                         pLand.reversePipePlacing(possiblefieldLoc, currentFieldSnapshot);
@@ -60,7 +89,6 @@ Result findSolution(Land pLand) {
             }
         }
     }
-    Result result1 = Result();
     result1.success = false;
     return result1;
 
