@@ -269,10 +269,6 @@ void Land::printLand() {
     cout<<endl<<endl;
 }
 
-int manhattanDistance(Loc loc1, Loc loc2) {
-    return abs(loc1.x - loc2.x) + abs(loc1.y - loc2.y);
-}
-
 bool areNeighbours(Loc loc1, Loc loc2) {
     return manhattanDistance(loc1, loc2) < 2;
 }

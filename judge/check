@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [[ $# -lt 1 ]] ; then
+	echo 'Usage: ./check [IN_FILE]'
+	exit 1
+fi
+
+cp ../examples/$1 ./in
+python3 judge.py in out
+rm in
+

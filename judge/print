@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [[ $# -lt 1 ]] ; then
+	echo 'Usage: ./print [IN_FILE]'
+	exit 1
+fi
+
+rm in.png
+cp ../examples/$1 ./in
+python3 print.py in out
+rm in
+

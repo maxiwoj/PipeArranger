@@ -24,7 +24,7 @@ typedef struct {
 
 typedef struct {
     bool success;
-    vector<PipePlacement> result;
+    vector<PipePlacement> pipesPlacements;
 } Result;
 
 typedef enum LandConnection {
@@ -38,6 +38,7 @@ typedef struct Pipe {
 
 void initializeStaticStructures();
 bool operator==(Loc loc1, Loc loc2);
+int manhattanDistance(Loc loc1, Loc loc2);
 
 extern int Xsize, Ysize;
 extern int SrcsNum;

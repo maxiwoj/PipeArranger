@@ -29,3 +29,7 @@ void initializeStaticStructures() {
 bool operator==(Loc loc1, Loc loc2) {
     return loc1.x == loc2.x && loc1.y == loc2.y;
 }
+
+int manhattanDistance(const Loc loc1, const Loc loc2) {
+    return abs(loc1.x - loc2.x) + abs(loc1.y - loc2.y);
+}
