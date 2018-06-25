@@ -1,2 +1,12 @@
 publish:
-	g++ -E -nostdinc -Dinclude=#include -I. -Isystem-headers main.cpp | grep -v '^# [0-9]' >> asd.cpp
+	g++ -E -nostdinc -Dinclude=#include -D NDEBUG -I. -Isystem-headers main.cpp | grep -v '^# [0-9]' > asd.cpp
+	echo '\n' >> asd.cpp
+	cat defs.cpp >> asd.cpp
+	echo '\n' >> asd.cpp
+	cat Land.cpp >> asd.cpp
+	sed 's/#include "/\/\//g' asd.cpp > whole.cpp
+
+compile:
+	g++ -O2 -Wall -std=c++0x -std=gnu++0x whole.cpp
+clean:
+	rm *.out asd.cpp whole.cpp

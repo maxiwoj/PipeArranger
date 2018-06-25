@@ -14,10 +14,6 @@ Result findSolution(Land pLand);
 vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs);
 
 
-bool enoughPipesToConnectHouses(Land land);
-
-void getClosestLeak(loc &loc);
-
 int Xsize, Ysize;
 int SrcsNum;
 loc *Srcs;
@@ -91,7 +87,7 @@ Result findSolution(Land pLand) {
         result1.success = true;
         return result1;
     }
-    if (pLand.nextPipes.empty() || !enoughPipesToConnectHouses(pLand)){
+    if (pLand.nextPipes.empty()){
         result1.success = false;
         return result1;
     }
@@ -127,35 +123,6 @@ Result findSolution(Land pLand) {
     result1.success = false;
     return result1;
 
-}
-
-int getClosestDistance(Loc searchedLoc, vector<Loc> locs) {
-    int closest = Xsize + Ysize;
-    for (const auto &loc: locs) {
-        int curr = manhattanDistance(searchedLoc, loc);
-        if (curr > 0){
-            closest = min(curr, closest);
-        }
-    }
-    return closest - 1;
-}
-
-
-bool enoughPipesToConnectHouses(Land land) {
-    int minimalPipesNeededToConnectHouse = 0;
-    for (const auto &unsuppliedHouse: land.unsuppliedHouses){
-        int curr = getClosestDistance(unsuppliedHouse, concatenate(land.freeSources, land.currentFieldsLeaking));
-        minimalPipesNeededToConnectHouse = max(curr, minimalPipesNeededToConnectHouse);
-    }
-
-    int minimalPipesNeededToCoverLeaks = 0;
-    for (const auto &leak: land.currentFieldsLeaking) {
-        minimalPipesNeededToCoverLeaks += getClosestDistance(leak, concatenate(land.currentFieldsLeaking, land.unsuppliedHouses));
-    }
-    minimalPipesNeededToCoverLeaks /= 2;
-
-
-    return max(minimalPipesNeededToConnectHouse, minimalPipesNeededToCoverLeaks) < land.nextPipes.size();
 }
 
 void readInput(ifstream &inputFile) {
