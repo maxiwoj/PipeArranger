@@ -4,9 +4,10 @@ publish:
 	cat defs.cpp >> asd.cpp
 	echo '\n' >> asd.cpp
 	cat Land.cpp >> asd.cpp
-	sed 's/#include "/\/\//g' asd.cpp > whole.cpp
-
+	sed 's/#include "/ \/\/ /g' asd.cpp > whole.cpp
+	rm asd.cpp
+	echo '#include <algorithm>' | cat - whole.cpp > temp && mv temp whole.cpp
 compile:
 	g++ -O2 -Wall -std=c++0x -std=gnu++0x whole.cpp
 clean:
-	rm *.out asd.cpp whole.cpp
+	rm *.out whole.cpp

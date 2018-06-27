@@ -17,7 +17,7 @@ typedef struct loc {
 } Loc;
 
 typedef struct {
-    loc loc;
+    loc localisation;
     string landMark;
 } PipePlacement;
 

@@ -41,13 +41,13 @@ Land::Land(int Xsize, int Ysize) {
     }
     for (int i = 0 ; i < SrcsNum ; i++) {
         this->takenFields[Srcs[i].x][Srcs[i].y] = true;
-        const Loc &srcLoc = (Loc){Srcs[i].x, Srcs[i].y};
+        const Loc srcLoc = (Loc){Srcs[i].x, Srcs[i].y};
         this->markFieldSingleType(srcLoc, Extra, true);
         this->freeSources.push_back(Srcs[i]);
     }
     for (int i = 0; i < HsNum; ++i) {
         this->takenFields[Houses[i].x][Houses[i].y] = true;
-        const Loc &houseLoc = (Loc){Houses[i].x, Houses[i].y};
+        const Loc houseLoc = (Loc){Houses[i].x, Houses[i].y};
         this->markFieldSingleType(houseLoc, Extra, true);
         this->unsuppliedHouses.push_back(Houses[i]);
         for (int src = 0 ; src < SrcsNum ; src++) {

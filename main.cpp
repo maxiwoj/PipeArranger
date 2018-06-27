@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <queue>
+
 #include <list>
 #include "Land.h"
 #include "defs.h"
@@ -30,7 +31,7 @@ string pipeTypes;
         ofstream outputFile("./judge/out");
         outputFile << currPipes.size() << endl;
         for (auto &pipePlacement: currPipes){
-            outputFile << pipePlacement.loc.x << " " << pipePlacement.loc.y << " " << pipePlacement.landMark << endl;
+            outputFile << pipePlacement.localisation.x << " " << pipePlacement.localisation.y << " " << pipePlacement.landMark << endl;
         }
         cout << "Succesfully printed " << currPipes.size() << " pipes to file"<<endl;
     }
@@ -68,7 +69,7 @@ int main(int argc, char* argv[]) {
         reverse(solution.pipesPlacements.begin(), solution.pipesPlacements.end());
         cout<<solution.pipesPlacements.size()<<endl;
         for (auto &pipePlacement: solution.pipesPlacements){
-            cout << pipePlacement.loc.x << " " << pipePlacement.loc.y << " " << pipePlacement.landMark << endl;
+            cout << pipePlacement.localisation.x << " " << pipePlacement.localisation.y << " " << pipePlacement.landMark << endl;
         }
     }
 
