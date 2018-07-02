@@ -1,6 +1,9 @@
 #include <iostream>
-#include <fstream>
 #include <queue>
+
+#ifndef NDEBUG
+#include <fstream>
+#endif
 
 #include <list>
 #include "Land.h"
@@ -8,7 +11,7 @@
 
 using namespace std;
 
-void readInput(ifstream &inputFile);
+void readInput();
 
 Result findSolution(Land pLand);
 
@@ -41,13 +44,11 @@ Pipe I1, I2, L1, L2, L3, L4, T1, T2, T3, T4, X;
 map<char, vector<Pipe>> pipes;
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        cout << "You need to specify input!" << endl;
-        return 1;
-    }
     initializeStaticStructures();
-    ifstream inputFile (argv[1]);
-    readInput(inputFile);
+    readInput();
+
+
+#ifndef NDEBUG
 
     cout << "wymiary: " << Xsize << " " << Ysize << endl;
     cout << "liczba źródeł: " << SrcsNum << endl;
@@ -55,7 +56,6 @@ int main(int argc, char* argv[]) {
     cout << "liczba blokow: " << BlNum << endl;
     cout << "block types: " << pipeTypes << endl;
 
-#ifndef NDEBUG
     currPipes = *new list<PipePlacement>();
     inPath = argv[1];
 #endif
@@ -125,30 +125,27 @@ Result findSolution(Land pLand) {
 
 }
 
-void readInput(ifstream &inputFile) {
-    if(inputFile.is_open()) {
-        inputFile >> Xsize;
-        inputFile >> Ysize;
-        inputFile >> SrcsNum;
-        Srcs = new Loc[SrcsNum];
-        for (int i = 0 ; i < SrcsNum ; i++) {
-            inputFile >> Srcs[i].x >> Srcs[i].y;
-        }
-        inputFile >> HsNum;
-        Houses = new Loc[HsNum];
-        for (int i = 0 ; i < HsNum ; i++) {
-            inputFile >> Houses[i].x >> Houses[i].y;
-        }
-        inputFile >> BlNum;
-        Blocks = new Loc[BlNum];
-        for (int i = 0 ; i < BlNum ; i++) {
-            inputFile >> Blocks[i].x >> Blocks[i].y;
-        }
-        inputFile >> pipeTypes;
-        inputFile.close();
-    } else {
-        cout << "Error opening file";
+void readInput() {
+
+    cin >> Xsize;
+    cin >> Ysize;
+    cin >> SrcsNum;
+    Srcs = new Loc[SrcsNum];
+    for (int i = 0 ; i < SrcsNum ; i++) {
+        cin >> Srcs[i].x >> Srcs[i].y;
     }
+    cin >> HsNum;
+    Houses = new Loc[HsNum];
+    for (int i = 0 ; i < HsNum ; i++) {
+        cin >> Houses[i].x >> Houses[i].y;
+    }
+    cin >> BlNum;
+    Blocks = new Loc[BlNum];
+    for (int i = 0 ; i < BlNum ; i++) {
+        cin >> Blocks[i].x >> Blocks[i].y;
+    }
+    cin >> pipeTypes;
+
 }
 
 // TODO: Go for checking for 2 vectors
