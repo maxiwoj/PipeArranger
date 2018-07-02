@@ -30,39 +30,35 @@ Land::Land(int Xsize, int Ysize) {
         }
     }
 
-
 //    Mark all fields with rocks, sources and houses as taken
-    this->takenFields = new bool*[this->Xsize];
+    this->takenFields = new LandPlacement*[this->Xsize];
     for (int i = 0 ; i < this->Xsize ; i++) {
-        this->takenFields[i] = new bool[this->Ysize];
+        this->takenFields[i] = new LandPlacement[this->Ysize];
         for (int j = 0 ; j < this->Ysize ; j++) {
-            this->takenFields[i][j] = false;
+            this->takenFields[i][j] = Free;
         }
     }
     for (int i = 0 ; i < SrcsNum ; i++) {
-        this->takenFields[Srcs[i].x][Srcs[i].y] = true;
         const Loc srcLoc = (Loc){Srcs[i].x, Srcs[i].y};
-        this->markFieldSingleType(srcLoc, Extra, true);
+        this->markFieldSingleType(srcLoc, Extra, Source);
         this->freeSources.push_back(Srcs[i]);
     }
     for (int i = 0; i < HsNum; ++i) {
-        this->takenFields[Houses[i].x][Houses[i].y] = true;
         const Loc houseLoc = (Loc){Houses[i].x, Houses[i].y};
-        this->markFieldSingleType(houseLoc, Extra, true);
+        this->markFieldSingleType(houseLoc, Extra, House);
         this->unsuppliedHouses.push_back(Houses[i]);
-        for (int src = 0 ; src < SrcsNum ; src++) {
-            if (areNeighbours(Srcs[src], houseLoc)) {
-                this->markFieldSingleType(Srcs[src], Blocked, true);
-                this->markFieldSingleType(houseLoc, Blocked, true);
-                freeSources.erase(remove(freeSources.begin(), freeSources.end(), Srcs[src]), freeSources.end());
-                unsuppliedHouses.pop_back();
-                break;
-            }
-        }
+//        for (int src = 0 ; src < SrcsNum ; src++) {
+//            if (areNeighbours(Srcs[src], houseLoc)) {
+//                this->markFieldSingleType(Srcs[src], Blocked, true);
+//                this->markFieldSingleType(houseLoc, Blocked, true);
+//                freeSources.erase(remove(freeSources.begin(), freeSources.end(), Srcs[src]), freeSources.end());
+//                unsuppliedHouses.pop_back();
+//                break;
+//            }
+//        }
     }
     for (int i = 0; i < BlNum; ++i) {
-        this->takenFields[Blocks[i].x][Blocks[i].y] = true;
-        this->markFieldSingleType((Loc){Blocks[i].x, Blocks[i].y}, Blocked, true);
+        this->markFieldSingleType((Loc){Blocks[i].x, Blocks[i].y}, Blocked, Rock);
     }
 
     for (auto &&pipeType :pipeTypes) {
@@ -78,19 +74,17 @@ Land::Land(int Xsize, int Ysize) {
         this->verticalLandConnections[x][0] = Blocked;
         this->verticalLandConnections[x][this->Ysize] = Blocked;
     }
-    this->allSources = *new vector<Loc>(freeSources);
-    this->allHouses = *new vector<Loc>(unsuppliedHouses);
 }
 
-void Land::markFieldSingleType(Loc loc, LandConnection type, bool taken) {
+void Land::markFieldSingleType(Loc loc, LandConnection type, LandPlacement placement) {
     auto fieldInfo = new FieldInfo;
-    fieldInfo->taken = taken;
+    fieldInfo->landPlacement = placement;
     fieldInfo->down = fieldInfo->left = fieldInfo->right = fieldInfo->up = type;
     this->markFieldMultipleType(loc, *fieldInfo);
 }
 
 void Land::markFieldMultipleType(Loc loc, FieldInfo types) {
-    this->takenFields[loc.x][loc.y] = types.taken;
+    this->takenFields[loc.x][loc.y] = types.landPlacement;
     this->verticalLandConnections[loc.x][loc.y] = loc.y != 0 ? types.up : Blocked;
     this->verticalLandConnections[loc.x][loc.y + 1] = loc.y + 1 != Ysize ? types.down : Blocked;
     this->horizontalLandConnections[loc.x][loc.y] = loc.x != 0 ? types.left : Blocked;
@@ -98,7 +92,7 @@ void Land::markFieldMultipleType(Loc loc, FieldInfo types) {
 }
 
 bool Land::tryPlacePipe(Loc loc, Pipe pipe) {
-    if(takenFields[loc.x][loc.y]) return false;
+    if(takenFields[loc.x][loc.y] != Free) return false;
 
 //    Check bounds compatibility
     if(checkBoundCompatibility(this->getFieldsUp(loc), pipe.up) &&
@@ -108,35 +102,35 @@ bool Land::tryPlacePipe(Loc loc, Pipe pipe) {
             waterWillFlowThroughNewPipe(loc, pipe)) {
         if (this->getFieldsUp(loc) == Extra && pipe.up == Full) {
             const Loc &locUp = (Loc) {loc.x, loc.y - 1};
-            this->markFieldSingleType(locUp, Blocked, true);
+            this->markFieldSingleType(locUp, Blocked, this->takenFields[locUp.x][locUp.y]);
             freeSources.erase(remove(this->freeSources.begin(), this->freeSources.end(), locUp), freeSources.end());
             unsuppliedHouses.erase(remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locUp), unsuppliedHouses.end());
             pipe.up = Extra;
         }
         if (this->getFieldsDown(loc) == Extra && pipe.down == Full) {
             const Loc &locDown = (Loc) {loc.x, loc.y + 1};
-            this->markFieldSingleType(locDown, Blocked, true);
+            this->markFieldSingleType(locDown, Blocked, this->takenFields[locDown.x][locDown.y]);
             freeSources.erase(remove(this->freeSources.begin(), this->freeSources.end(), locDown), freeSources.end());
             unsuppliedHouses.erase(remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locDown), unsuppliedHouses.end());
             pipe.down = Extra;
         }
         if (this->getFieldsLeft(loc) == Extra && pipe.left == Full) {
             const Loc &locLeft = (Loc) {loc.x - 1, loc.y};
-            this->markFieldSingleType(locLeft, Blocked, true);
+            this->markFieldSingleType(locLeft, Blocked, this->takenFields[locLeft.x][locLeft.y]);
             freeSources.erase(remove(this->freeSources.begin(), this->freeSources.end(), locLeft), freeSources.end());
             unsuppliedHouses.erase(remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locLeft), unsuppliedHouses.end());
             pipe.left = Extra;
         }
         if(this->getFieldsRight(loc) == Extra && pipe.right == Full) {
             const Loc &locRight = (Loc) {loc.x + 1, loc.y};
-            this->markFieldSingleType(locRight, Blocked, true);
+            this->markFieldSingleType(locRight, Blocked, this->takenFields[locRight.x][locRight.y]);
             freeSources.erase(remove(this->freeSources.begin(), this->freeSources.end(), locRight), freeSources.end());
             unsuppliedHouses.erase(remove(this->unsuppliedHouses.begin(), this->unsuppliedHouses.end(), locRight), unsuppliedHouses.end());
             pipe.right = Extra;
         }
 
         auto newField = new FieldInfo;
-        newField->taken = true;
+        newField->landPlacement = WaterPipe;
         newField->right = pipe.right;
         newField->left = pipe.left;
         newField->up = pipe.up;
@@ -163,7 +157,7 @@ LandConnection Land::getFieldsRight(Loc loc) {
 }
 
 void Land::reversePipePlacing(Loc loc, FieldInfo field) {
-    this->takenFields[loc.x][loc.y] = false;
+    this->takenFields[loc.x][loc.y] = Free;
 
     const Loc &locUp = (Loc) {loc.x, loc.y - 1};
     reverseNearbyFields(locUp, field.up);
@@ -184,10 +178,10 @@ void Land::reversePipePlacing(Loc loc, FieldInfo field) {
 void Land::reverseNearbyFields(const Loc &fieldLoc, const LandConnection &connection) {
     if (connection == Extra) {
             //TODO: If not blocked from other blocks EDIT: This should not mess up since it would be taken... EDIT: Not if this was the end of the Land
-            markFieldSingleType(fieldLoc, Extra, true);
-            if(find(allHouses.begin(), allHouses.end(), fieldLoc) != allHouses.end()){
+            markFieldSingleType(fieldLoc, Extra, this->takenFields[fieldLoc.x][fieldLoc.y]);
+            if(this->takenFields[fieldLoc.x][fieldLoc.y] == House){
                 unsuppliedHouses.push_back(fieldLoc);
-            } else if(find(allSources.begin(), allSources.end(), fieldLoc) != allSources.end()) {
+            } else if(this->takenFields[fieldLoc.x][fieldLoc.y] == Source) {
                 freeSources.push_back(fieldLoc);
             }
         } else if (connection == Full) {
@@ -201,7 +195,7 @@ FieldInfo Land::getFieldInfo(Loc loc) {
     fieldInfo->left = this->horizontalLandConnections[loc.x][loc.y];
     fieldInfo->up = this->verticalLandConnections[loc.x][loc.y];
     fieldInfo->down = this->verticalLandConnections[loc.x][loc.y + 1];
-    fieldInfo->taken = this->takenFields[loc.x][loc.y];
+    fieldInfo->landPlacement = this->takenFields[loc.x][loc.y];
     return *fieldInfo;
 }
 
@@ -212,16 +206,16 @@ bool Land::checkBoundCompatibility(LandConnection fieldConnection, LandConnectio
 vector<Loc> Land::getPossibleNeighbourFields(const loc &loc) {
     auto *fields = new vector<Loc>();
     auto field = this->getFieldInfo(loc);
-    if ((field.up == Extra || field.up == Full) && !this->takenFields[loc.x][loc.y - 1]){
+    if ((field.up == Extra || field.up == Full) && this->takenFields[loc.x][loc.y - 1] == Free){
         fields->push_back((Loc) {loc.x, loc.y - 1});
     }
-    if ((field.down == Extra || field.down == Full) && !this->takenFields[loc.x][loc.y + 1]){
+    if ((field.down == Extra || field.down == Full) && this->takenFields[loc.x][loc.y + 1] == Free){
         fields->push_back((Loc) {loc.x, loc.y + 1});
     }
-    if ((field.left == Extra || field.left == Full) && !this->takenFields[loc.x - 1][loc.y]){
+    if ((field.left == Extra || field.left == Full) && this->takenFields[loc.x - 1][loc.y] == Free){
         fields->push_back((Loc) {loc.x - 1, loc.y});
     }
-    if ((field.right == Extra || field.right == Full) && !this->takenFields[loc.x + 1][loc.y]){
+    if ((field.right == Extra || field.right == Full) && this->takenFields[loc.x + 1][loc.y] == Free){
         fields->push_back((Loc) {loc.x + 1, loc.y});
     }
     if(fields->empty()){
@@ -231,11 +225,24 @@ vector<Loc> Land::getPossibleNeighbourFields(const loc &loc) {
     return *fields;
 }
 
+//TODO: does not consider taking the Extra fields from the house (Extra has to be from source)
 bool Land::waterWillFlowThroughNewPipe(Loc loc, const Pipe &pipe) {
-    return (pipe.up == Full && this->getFieldsUp(loc) != Empty) || (pipe.down == Full && this->getFieldsDown(loc) != Empty)
-            || (pipe.right == Full && this->getFieldsRight(loc) != Empty) || (pipe.left == Full && this->getFieldsLeft(loc) != Empty);
+    if (pipe.up == Full && (this->getFieldsUp(loc) == Full || (this->getFieldsUp(loc) == Extra && this->takenFields[loc.x][loc.y - 1] == Source))) {
+        return true;
+    }
+    if (pipe.down == Full && (this->getFieldsDown(loc) == Full  || (this->getFieldsDown(loc) == Extra && this->takenFields[loc.x][loc.y + 1] == Source))) {
+        return true;
+    }
+    if (pipe.right == Full && (this->getFieldsRight(loc) == Full || (this->getFieldsRight(loc) == Extra && this->takenFields[loc.x + 1][loc.y] == Source))) {
+        return true;
+    }
+    if (pipe.left == Full && (this->getFieldsLeft(loc) == Full || (this->getFieldsLeft(loc) == Extra && this->takenFields[loc.x - 1][loc.y] == Source))) {
+        return true;
+    }
+    return false;
 }
 
+#ifndef NDEBUG
 void Land::printLand() {
     map<LandConnection, char> printMap = {
             make_pair(Empty, ' '),
@@ -243,9 +250,12 @@ void Land::printLand() {
             make_pair(Extra, 'e'),
             make_pair(Blocked, 'x')
     };
-    map<bool, char> printMapB = {
-            make_pair(true, 'T'),
-            make_pair(false, 'F')
+    map<LandPlacement, char> printMapB = {
+            make_pair(House, 'H'),
+            make_pair(Source, 'S'),
+            make_pair(WaterPipe, 'P'),
+            make_pair(Free, ' '),
+            make_pair(Rock, ' ')
     };
 
     for (int i = 0 ; i < Xsize ; i++){
@@ -268,6 +278,7 @@ void Land::printLand() {
     }
     cout<<endl<<endl;
 }
+#endif
 
 bool areNeighbours(Loc loc1, Loc loc2) {
     return manhattanDistance(loc1, loc2) < 2;

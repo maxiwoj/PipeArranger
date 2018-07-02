@@ -14,7 +14,7 @@ typedef struct FieldInfo {
     LandConnection down;
     LandConnection left;
     LandConnection right;
-    bool taken;
+    LandPlacement landPlacement;
 } FieldInfo;
 
 class Land {
@@ -22,17 +22,14 @@ class Land {
     LandConnection **horizontalLandConnections;
     LandConnection **verticalLandConnections;
 
-    bool **takenFields;
+    LandPlacement **takenFields;
 
-    void markFieldSingleType(Loc loc, LandConnection type, bool taken);
+    void markFieldSingleType(Loc loc, LandConnection type, LandPlacement placement);
 
 public:
     vector<char> nextPipes;
     vector<loc> freeSources;
     vector<loc> unsuppliedHouses;
-
-    vector<loc> allSources;
-    vector<loc> allHouses;
 
     vector<loc> currentFieldsLeaking;
 

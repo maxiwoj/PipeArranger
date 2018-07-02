@@ -80,7 +80,6 @@ Result findSolution(Land pLand) {
 //    End conditions
     Result result1 = Result();
 
-
     for(auto &field: concatenate(pLand.currentFieldsLeaking, pLand.freeSources)){
         pLand.getPossibleNeighbourFields(field);
     }

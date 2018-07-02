@@ -31,6 +31,10 @@ typedef enum LandConnection {
     Empty, Extra, Full, Blocked
 } LandConnection;
 
+typedef enum LandPlacement {
+    House, Source, Rock, Free, WaterPipe
+} LandPlacement;
+
 typedef struct Pipe {
     string name;
     LandConnection up, right, down, left;
