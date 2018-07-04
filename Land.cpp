@@ -182,7 +182,7 @@ void Land::reverseNearbyFields(const Loc &fieldLoc, const LandConnection &connec
             if(this->takenFields[fieldLoc.x][fieldLoc.y] == House){
                 unsuppliedHouses.push_back(fieldLoc);
             } else if(this->takenFields[fieldLoc.x][fieldLoc.y] == Source) {
-                freeSources.push_back(fieldLoc);
+                freeSources.insert(freeSources.begin(), fieldLoc);
             }
         } else if (connection == Full) {
             currentFieldsLeaking.push_back(fieldLoc);
