@@ -7,7 +7,7 @@
 
 using namespace std;
 
-bool areNeighbours(Loc loc1, Loc loc2) ;
+//bool areNeighbours(Loc loc1, Loc loc2) ;
 
 // initialize land
 Land::Land(int Xsize, int Ysize) {
@@ -77,10 +77,10 @@ Land::Land(int Xsize, int Ysize) {
 }
 
 void Land::markFieldSingleType(Loc loc, LandConnection type, LandPlacement placement) {
-    auto fieldInfo = new FieldInfo;
-    fieldInfo->landPlacement = placement;
-    fieldInfo->down = fieldInfo->left = fieldInfo->right = fieldInfo->up = type;
-    this->markFieldMultipleType(loc, *fieldInfo);
+    FieldInfo fieldInfo;
+    fieldInfo.landPlacement = placement;
+    fieldInfo.down = fieldInfo.left = fieldInfo.right = fieldInfo.up = type;
+    this->markFieldMultipleType(loc, fieldInfo);
 }
 
 void Land::markFieldMultipleType(Loc loc, FieldInfo types) {
@@ -129,13 +129,13 @@ bool Land::tryPlacePipe(Loc loc, Pipe pipe) {
             pipe.right = Extra;
         }
 
-        auto newField = new FieldInfo;
-        newField->landPlacement = WaterPipe;
-        newField->right = pipe.right;
-        newField->left = pipe.left;
-        newField->up = pipe.up;
-        newField->down = pipe.down;
-        this->markFieldMultipleType(loc, *newField);
+        FieldInfo newField;
+        newField.landPlacement = WaterPipe;
+        newField.right = pipe.right;
+        newField.left = pipe.left;
+        newField.up = pipe.up;
+        newField.down = pipe.down;
+        this->markFieldMultipleType(loc, newField);
         this->currentFieldsLeaking.push_back(loc);
 
         return true;
@@ -190,13 +190,13 @@ void Land::reverseNearbyFields(const Loc &fieldLoc, const LandConnection &connec
 }
 
 FieldInfo Land::getFieldInfo(Loc loc) {
-    auto fieldInfo = new FieldInfo;
-    fieldInfo->right = this->horizontalLandConnections[loc.x + 1][loc.y];
-    fieldInfo->left = this->horizontalLandConnections[loc.x][loc.y];
-    fieldInfo->up = this->verticalLandConnections[loc.x][loc.y];
-    fieldInfo->down = this->verticalLandConnections[loc.x][loc.y + 1];
-    fieldInfo->landPlacement = this->takenFields[loc.x][loc.y];
-    return *fieldInfo;
+    FieldInfo fieldInfo;
+    fieldInfo.right = this->horizontalLandConnections[loc.x + 1][loc.y];
+    fieldInfo.left = this->horizontalLandConnections[loc.x][loc.y];
+    fieldInfo.up = this->verticalLandConnections[loc.x][loc.y];
+    fieldInfo.down = this->verticalLandConnections[loc.x][loc.y + 1];
+    fieldInfo.landPlacement = this->takenFields[loc.x][loc.y];
+    return fieldInfo;
 }
 
 bool Land::checkBoundCompatibility(LandConnection fieldConnection, LandConnection pipeConnection) {
@@ -204,28 +204,27 @@ bool Land::checkBoundCompatibility(LandConnection fieldConnection, LandConnectio
 }
 
 vector<Loc> Land::getPossibleNeighbourFields(const loc &loc) {
-    auto *fields = new vector<Loc>();
+    vector<Loc> fields;
     auto field = this->getFieldInfo(loc);
     if ((field.up == Extra || field.up == Full) && this->takenFields[loc.x][loc.y - 1] == Free){
-        fields->push_back((Loc) {loc.x, loc.y - 1});
+        fields.push_back((Loc) {loc.x, loc.y - 1});
     }
     if ((field.down == Extra || field.down == Full) && this->takenFields[loc.x][loc.y + 1] == Free){
-        fields->push_back((Loc) {loc.x, loc.y + 1});
+        fields.push_back((Loc) {loc.x, loc.y + 1});
     }
     if ((field.left == Extra || field.left == Full) && this->takenFields[loc.x - 1][loc.y] == Free){
-        fields->push_back((Loc) {loc.x - 1, loc.y});
+        fields.push_back((Loc) {loc.x - 1, loc.y});
     }
     if ((field.right == Extra || field.right == Full) && this->takenFields[loc.x + 1][loc.y] == Free){
-        fields->push_back((Loc) {loc.x + 1, loc.y});
+        fields.push_back((Loc) {loc.x + 1, loc.y});
     }
-    if(fields->empty()){
+    if(fields.empty()){
         freeSources.erase(remove(freeSources.begin(), freeSources.end(), loc), freeSources.end());
         currentFieldsLeaking.erase(remove(currentFieldsLeaking.begin(), currentFieldsLeaking.end(), loc), currentFieldsLeaking.end());
     }
-    return *fields;
+    return fields;
 }
 
-//TODO: does not consider taking the Extra fields from the house (Extra has to be from source)
 bool Land::waterWillFlowThroughNewPipe(Loc loc, const Pipe &pipe) {
     if (pipe.up == Full && (this->getFieldsUp(loc) == Full || (this->getFieldsUp(loc) == Extra && this->takenFields[loc.x][loc.y - 1] == Source))) {
         return true;
@@ -280,6 +279,6 @@ void Land::printLand() {
 }
 #endif
 
-bool areNeighbours(Loc loc1, Loc loc2) {
-    return manhattanDistance(loc1, loc2) < 2;
-}
+//bool areNeighbours(Loc loc1, Loc loc2) {
+//    return manhattanDistance(loc1, loc2) < 2;
+//}

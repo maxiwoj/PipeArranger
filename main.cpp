@@ -17,7 +17,7 @@ void readInputFromFile(ifstream &inputFile);
 
 void readInput();
 
-Result findSolution(Land pLand);
+Result findSolution(Land &pLand);
 
 vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs);
 
@@ -74,9 +74,9 @@ int main(int argc, char* argv[]) {
     inPath = argv[1];
 #endif
 
-    auto land = new Land(Xsize, Ysize);
+    Land land = Land(Xsize, Ysize);
 
-    Result solution = findSolution(*land);
+    Result solution = findSolution(land);
     if(!solution.success) {
         cout << "Could not find solution!" << endl;
     } else {
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-Result findSolution(Land pLand) {
+Result findSolution(Land &pLand) {
 //    End conditions
     Result result1 = Result();
 
@@ -135,6 +135,7 @@ Result findSolution(Land pLand) {
             }
         }
     }
+    pLand.nextPipes.insert(pLand.nextPipes.begin(), nextPipe);
     result1.success = false;
     return result1;
 
