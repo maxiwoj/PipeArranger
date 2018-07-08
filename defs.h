@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <random>
 
 using namespace std;
 
@@ -52,6 +53,7 @@ extern loc *Houses;
 extern int BlNum;
 extern loc *Blocks;
 extern string pipeTypes;
+extern unsigned seed;
 
 
 extern Pipe I1, I2, L1, L2, L3, L4, T1, T2, T3, T4, X;

@@ -21,6 +21,11 @@ Result findSolution(Land &pLand);
 
 vector<Loc> concatenate(const std::vector<Loc>& lhs, const std::vector<Loc>& rhs);
 
+bool enoughPipesToConnectHouses(const Land& land);
+
+int getClosestDistance(const Loc& searchedLoc, const vector<Loc>& locs);
+
+
 
 int Xsize, Ysize;
 int SrcsNum;
@@ -90,19 +95,36 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-Result findSolution(Land pLand) {
+Result findSolution(Land &pLand) {
 //    End conditions
     Result result1 = Result();
 
     const vector<Loc> possiblePlacementFields = concatenate(pLand.currentFieldsLeaking, pLand.freeSources);
     for(auto &field: possiblePlacementFields){
         pLand.getPossibleNeighbourFields(field);
+//        bool fieldIsALeak = (pLand.getFieldInfo(field).landPlacement == WaterPipe);
+//        auto possibleFields = pLand.getPossibleNeighbourFields(field);
+//        if (fieldIsALeak) {
+//            for(auto &possibleField: possibleFields) { // check if field is blocked
+//                auto fieldInfo = pLand.getFieldInfo(possibleField);
+//                int openConnections = 4;
+//                if (fieldInfo.up == Blocked) openConnections -= 1;
+//                if (fieldInfo.right == Blocked) openConnections -= 1;
+//                if (fieldInfo.left == Blocked) openConnections -= 1;
+//                if (fieldInfo.down == Blocked) openConnections -= 1;
+//                if (openConnections < 2) {
+//                    result1.success = false;
+//                    return result1;
+//                }
+//            }
+//        }
     }
     if (pLand.unsuppliedHouses.empty() && pLand.currentFieldsLeaking.empty()){
         result1.success = true;
         return result1;
     }
-    if (pLand.nextPipes.empty()){
+//    if (pLand.nextPipes.empty() || !enoughPipesToConnectHouses(pLand)){
+    if (pLand.nextPipes.empty()) {
         result1.success = false;
         return result1;
     }
@@ -139,6 +161,36 @@ Result findSolution(Land pLand) {
     result1.success = false;
     return result1;
 
+}
+
+int getClosestDistance(const Loc& searchedLoc, const vector<Loc>& locs) {
+    int closest = Xsize + Ysize;
+    for (const auto &loc: locs) {
+        int curr = manhattanDistance(searchedLoc, loc);
+        if (curr > 0){
+            closest = min(curr, closest);
+        }
+    }
+    return closest - 2;
+}
+
+
+bool enoughPipesToConnectHouses(const Land &land) {
+    int minimalPipesNeededToConnectHouse = 0;
+    for (const auto &unsuppliedHouse: land.unsuppliedHouses){
+        int curr = getClosestDistance(unsuppliedHouse, concatenate(land.freeSources, land.currentFieldsLeaking));
+        minimalPipesNeededToConnectHouse = max(curr, minimalPipesNeededToConnectHouse);
+    }
+
+    int minimalPipesNeededToCoverLeaks = 0;
+    for (const auto &leak: land.currentFieldsLeaking) {
+        minimalPipesNeededToCoverLeaks += getClosestDistance(leak, concatenate(land.currentFieldsLeaking, land.unsuppliedHouses));
+    }
+    minimalPipesNeededToCoverLeaks /= 2;
+
+
+//    return minimalPipesNeededToConnectHouse  < land.nextPipes.size();
+    return max(minimalPipesNeededToConnectHouse , minimalPipesNeededToCoverLeaks) < land.nextPipes.size();
 }
 
 #ifndef NDEBUG
